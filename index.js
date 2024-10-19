@@ -1,23 +1,65 @@
 const btn = document.querySelector(".btn");
-const main = document.querySelector("main");
-const color = document.querySelector(".color");
 
+const color = document.querySelector(".color");
+const format = document.querySelector(".format");
+
+const navLinks = document.querySelectorAll("nav ul li a");
+
+let hexColor;
+
+/// obtiene el color desde la api por primera vez
+getColor().then(data => {
+  hexColor = data;
+
+  document.body.style.backgroundColor = hexColor[format.textContent].value;
+  color.textContent = hexColor[format.textContent].value;
+  color.style.color = hexColor[format.textContent].value;
+
+}).catch(error => {
+  console.log(error);
+})
 
 function randomHexColor() {
-  return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+  return `${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
 }
 
-function blackOrWhite(hexColor) {
-  const r = parseInt(hexColor.slice(1, 3), 16);
-  const g = parseInt(hexColor.slice(3, 5), 16);
-  const b = parseInt(hexColor.slice(5, 7), 16);
-  return r * 0.299 + g * 0.587 + b * 0.114 > 186 ? "black" : "white";
+async function getColor(value = "f1f5f8") {
+
+  try {
+    const url = `https://www.thecolorapi.com/id?hex=${value}`;
+    const data = await (await fetch(url)).json();
+
+    console.log(data);
+
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+
 }
 
-btn.addEventListener("click", function () {
-  let hexColor = randomHexColor();
+/// cada vez que el usuario hace click, 
+/// se cambia el color de fondo y el color del texto ademas de cambiar el "formato"
+btn.addEventListener("click", async () => {
+  hexColor = await getColor(randomHexColor());
 
-  main.style.backgroundColor = hexColor;
-  color.textContent = hexColor;
-  color.style.color = hexColor;
+  document.body.style.backgroundColor = format.textContent === "name" ? hexColor[format.textContent]["closest_named_hex"] : hexColor[format.textContent].value;
+  color.textContent = hexColor[format.textContent].value;
+  color.style.color = format.textContent === "name" ? hexColor[format.textContent]["closest_named_hex"] : hexColor[format.textContent].value;
 });
+
+navLinks.forEach(link => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    console.log(e.target.textContent, hexColor[e.target.textContent]);
+
+    if (hexColor[e.target.textContent]) {
+      format.textContent = e.target.textContent;
+      document.body.style.backgroundColor = hexColor[e.target.textContent].value;
+      color.style.color = hexColor[e.target.textContent].value;
+      color.textContent = hexColor[e.target.textContent].value;
+    }
+
+  })
+})
